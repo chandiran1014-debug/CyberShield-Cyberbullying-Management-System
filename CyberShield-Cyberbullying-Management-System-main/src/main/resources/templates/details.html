@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaint Details – CyberShield</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a th:href="@{/}" class="brand">
+            <span class="brand-icon">🛡️</span> CyberShield
+        </a>
+        <div class="nav-links">
+            <a th:href="@{/}">Home</a>
+            <a th:href="@{/user/dashboard}">User Dashboard</a>
+            <a th:href="@{/admin/dashboard}">Admin Portal</a>
+        </div>
+    </nav>
+
+    <main class="container" style="max-width: 900px;">
+        <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="display: flex; gap: 0.5rem;">
+                <a th:href="@{/user/dashboard}" class="btn btn-secondary btn-sm">← Back to User Dashboard</a>
+                <a th:href="@{/admin/dashboard}" class="btn btn-secondary btn-sm">Officer Feed</a>
+            </div>
+            <span id="headerCaseNumber" style="font-family: monospace; font-size: 1.25rem; font-weight: 700; color: var(--cyan);"></span>
+        </div>
+
+        <div id="alertBox" style="display: none; margin-bottom: 1.5rem;"></div>
+
+        <div id="detailsContainer">
+            <div style="color: var(--text-muted); text-align: center; padding: 3rem;">Loading complaint details...</div>
+        </div>
+    </main>
+
+    <!-- Platform Action Email Generator & Preview Modal -->
+    <div id="platformActionModal" class="modal-overlay">
+        <div class="modal-content modal-content-lg">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                    <div class="card-title" style="margin-bottom: 0.25rem;">🌐 Platform Escalation Notice</div>
+                    <p class="card-subtitle" style="margin: 0;">Formal Intermediary Safety Escalation</p>
+                </div>
+                <button onclick="closePlatformActionModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <div id="paAlertBox" style="display: none; margin-bottom: 1rem;"></div>
+
+            <input type="hidden" id="paComplaintId">
+            <input type="hidden" id="paActionId">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label">Platform</label>
+                    <select id="paPlatformSelect" class="form-select" onchange="handlePaPlatformChange()">
+                        <option value="Instagram">Instagram</option>
+                        <option value="WhatsApp">WhatsApp</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="YouTube">YouTube</option>
+                        <option value="X">X (Twitter)</option>
+                        <option value="Discord">Discord</option>
+                        <option value="Online Game">Online Game</option>
+                        <option value="Other">Other Platform</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label">Reported Account / Username</label>
+                    <input type="text" id="paReportedAccount" class="form-control" placeholder="@username or account ID">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Recipient Contact (Platform Safety Team)</label>
+                <input type="email" id="paRecipient" class="form-control" placeholder="safety@platform.com">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email Subject</label>
+                <input type="text" id="paSubject" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <label class="form-label" style="margin: 0;">Generated Platform Safety Report (Email Body)</label>
+                    <span id="paEditStatusBadge" class="badge" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; font-size: 0.72rem;">Preview Mode</span>
+                </div>
+                <textarea id="paMessage" class="form-control" style="min-height: 220px; font-family: monospace; font-size: 0.85rem; line-height: 1.5;" readonly></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+                <div>
+                    <button type="button" id="paToggleEditBtn" onclick="togglePaEditMode()" class="btn btn-secondary btn-sm">
+                        ✏️ Edit Message
+                    </button>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="button" onclick="closePlatformActionModal()" class="btn btn-secondary">Close</button>
+                    <button type="button" id="paSendBtn" onclick="confirmSendPlatformAction()" class="btn btn-primary" style="background: linear-gradient(135deg, #0284c7, #0369a1);">
+                        🚀 Send Platform Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        CyberShield © 2026 – Cyberbullying Complaint Management System
+    </footer>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', loadDetails);
+
+        async function loadDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let id = urlParams.get('id');
+
+            if (!id) {
+                const parts = window.location.pathname.split('/');
+                id = parts[parts.length - 1];
+            }
+
+            const container = document.getElementById('detailsContainer');
+
+            if (!id || isNaN(id)) {
+                container.innerHTML = `<div class="alert alert-error">No valid complaint ID specified.</div>`;
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/complaints/${id}`);
+                const c = await response.json();
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        container.innerHTML = `
+                            <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">⛔</div>
+                                <h2 style="color: #ef4444; margin-bottom: 0.75rem;">Access Denied</h2>
+                                <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 1.5rem; line-height: 1.6;">
+                                    You do not have authorization to view this incident report. CyberShield privacy controls restrict case access to the complainant who filed it and verified cyber crime officers.
+                                </p>
+                                <a href="/user/dashboard" class="btn btn-primary">Return to Your Dashboard</a>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = `<div class="alert alert-error">Complaint not found: ${c.error || 'Unknown error'}</div>`;
+                    }
+                    return;
+                }
+
+                document.getElementById('headerCaseNumber').innerText = c.complaintNumber;
+
+                const threat = (c.threatLevel || 'LOW').toUpperCase();
+                let badgeClass = 'badge-low';
+                if (threat === 'MEDIUM') badgeClass = 'badge-medium';
+                if (threat === 'HIGH') badgeClass = 'badge-high';
+                if (threat === 'CRITICAL') badgeClass = 'badge-critical';
+
+                const isImmediate = threat === 'HIGH' || threat === 'CRITICAL' || c.priority === 'IMMEDIATE_ATTENTION';
+                const immediateBanner = isImmediate ? `
+                    <div class="alert-warning-banner" style="margin-bottom: 1.5rem;">
+                        <span style="font-size: 1.5rem;">🚨</span>
+                        <div>
+                            <strong style="font-size: 1.1rem; letter-spacing: 0.5px;">IMMEDIATE ATTENTION</strong><br>
+                            High or Critical severity incident flagged for expedited priority triage.
+                        </div>
+                    </div>
+                ` : '';
+
+                const dateStr = c.createdAt ? new Date(c.createdAt).toLocaleString() : 'N/A';
+                const incidentDateStr = c.incidentDateTime ? new Date(c.incidentDateTime).toLocaleString() : 'Not Provided';
+
+                // Timeline Step Calculation
+                const statusUpper = (c.status || 'SUBMITTED').toUpperCase();
+                let activeIndex = 1;
+                if (statusUpper === 'SUBMITTED') activeIndex = 1;
+                else if (statusUpper === 'UNDER_REVIEW') activeIndex = 2;
+                else if (statusUpper === 'EVIDENCE_VERIFICATION' || statusUpper === 'EVIDENCE_VERIFIED') activeIndex = 3;
+                else if (statusUpper === 'INVESTIGATION' || statusUpper === 'ACTION_TAKEN') activeIndex = 4;
+                else if (statusUpper === 'RESOLVED') activeIndex = 5;
+
+                const timelineHtml = `
+                    <div class="timeline-stepper">
+                        <div class="timeline-step ${activeIndex > 1 ? 'completed' : (activeIndex === 1 ? 'active' : '')}">
+                            <div class="timeline-step-icon">${activeIndex > 1 ? '✓' : '1'}</div>
+                            <div class="timeline-step-label">Submitted</div>
+                        </div>
+                        <div class="timeline-step ${activeIndex > 2 ? 'completed' : (activeIndex === 2 ? 'active' : '')}">
+                            <div class="timeline-step-icon">${activeIndex > 2 ? '✓' : '2'}</div>
+                            <div class="timeline-step-label">Under Review</div>
+                        </div>
+                        <div class="timeline-step ${activeIndex > 3 ? 'completed' : (activeIndex === 3 ? 'active' : '')}">
+                            <div class="timeline-step-icon">${activeIndex > 3 ? '✓' : '3'}</div>
+                            <div class="timeline-step-label">Evidence Verified</div>
+                        </div>
+                        <div class="timeline-step ${activeIndex > 4 ? 'completed' : (activeIndex === 4 ? 'active' : '')}">
+                            <div class="timeline-step-icon">${activeIndex > 4 ? '✓' : '4'}</div>
+                            <div class="timeline-step-label">Action Taken</div>
+                        </div>
+                        <div class="timeline-step ${activeIndex === 5 ? 'completed' : ''}">
+                            <div class="timeline-step-icon">${activeIndex === 5 ? '✓' : '5'}</div>
+                            <div class="timeline-step-label">Resolved</div>
+                        </div>
+                    </div>
+                `;
+
+                // Admin Remarks Box
+                const remarksHtml = (c.adminRemarks && c.adminRemarks.trim()) ? `
+                    <div style="margin-top: 1.25rem; background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.35); border-radius: 8px; padding: 1.25rem;">
+                        <h4 style="color: #38bdf8; font-size: 0.95rem; margin-bottom: 0.35rem;">👮 Investigating Officer Remarks / Updates</h4>
+                        <p style="color: #e0f2fe; font-size: 0.92rem; line-height: 1.6; margin: 0;">${escapeHtml(c.adminRemarks)}</p>
+                    </div>
+                ` : '';
+
+                // Analysis Info
+                let analysisHtml = `<p style="color: var(--text-muted);">No analysis recorded.</p>`;
+                if (c.preliminaryAnalysis) {
+                    analysisHtml = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 8px;">
+                                <div class="form-label">Risk Score</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--cyan);">${c.preliminaryAnalysis.riskScore}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 8px;">
+                                <div class="form-label">Matched Keywords</div>
+                                <div style="font-size: 1.5rem; font-weight: 700;">${c.preliminaryAnalysis.matchedCount}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 8px;">
+                                <div class="form-label">Calculated Severity</div>
+                                <span class="badge ${badgeClass}">${c.preliminaryAnalysis.detectedSeverity}</span>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 8px;">
+                                <div class="form-label">Action Priority</div>
+                                <div style="font-weight: 600; color: ${isImmediate ? '#f87171' : '#a5b4fc'};">
+                                    ${isImmediate ? '🚨 IMMEDIATE ATTENTION' : c.preliminaryAnalysis.priority}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Evidence Section
+                let evidenceHtml = `<p style="color: var(--text-muted);">No screenshot evidence attached to this case.</p>`;
+                if (c.evidence && c.evidence.length > 0) {
+                    evidenceHtml = c.evidence.map(ev => {
+                        const isVerified = ev.verificationStatus === 'VERIFIED';
+                        const isRejected = ev.verificationStatus === 'REJECTED';
+                        let statusColor = '#f59e0b';
+                        if (isVerified) statusColor = '#10b981';
+                        if (isRejected) statusColor = '#ef4444';
+
+                        const previewPath = ev.filePath ? ('/' + ev.filePath.replace(/\\/g, '/')) : '';
+
+                        return `
+                            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div>
+                                        <strong>📁 ${escapeHtml(ev.fileName)}</strong>
+                                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                                            Uploaded: ${new Date(ev.uploadedAt).toLocaleString()}
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                        <span class="badge" style="border: 1px solid ${statusColor}; color: ${statusColor};">${ev.verificationStatus}</span>
+                                        <button onclick="verifyEvidenceItem(${ev.id}, 'VERIFIED')" class="btn btn-secondary btn-sm" style="color: #10b981;">Verify</button>
+                                        <button onclick="verifyEvidenceItem(${ev.id}, 'REJECTED')" class="btn btn-secondary btn-sm" style="color: #f87171;">Reject</button>
+                                    </div>
+                                </div>
+                                ${previewPath ? `
+                                    <div style="margin-top: 0.5rem;">
+                                        <a href="${previewPath}" target="_blank" style="color: var(--cyan); font-size: 0.85rem;">🔍 View full resolution screenshot</a>
+                                        <br>
+                                        <img src="${previewPath}" alt="Evidence" style="max-height: 220px; border-radius: 6px; margin-top: 0.5rem; border: 1px solid var(--border-color); object-fit: contain;">
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                container.innerHTML = `
+                    ${immediateBanner}
+
+                    <!-- Core Information Card -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span>${escapeHtml(c.title)}</span>
+                            <span class="badge ${badgeClass}">${threat}</span>
+                        </div>
+
+                        <!-- Visual Timeline -->
+                        ${timelineHtml}
+
+                        <div class="complaint-meta" style="margin-top: 1rem;">
+                            👤 <strong>Complainant:</strong> ${escapeHtml(c.userName)} (${escapeHtml(c.userEmail)}) | 
+                            🏷️ <strong>Category:</strong> ${escapeHtml(c.category)} | 
+                            📱 <strong>Platform:</strong> ${escapeHtml(c.platform)} | 
+                            🕒 <strong>Filed:</strong> ${dateStr} | 
+                            📅 <strong>Incident Date:</strong> ${incidentDateStr}
+                        </div>
+
+                        <div style="margin-top: 1.25rem;">
+                            <label class="form-label">Incident Description & Harassment Content</label>
+                            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(c.description)}</div>
+                        </div>
+
+                        ${c.postUrl ? `
+                            <div style="margin-top: 1rem; background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 0.85rem 1.15rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                                <div style="min-width: 220px; flex: 1;">
+                                    <span style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; display: block; margin-bottom: 0.2rem;">
+                                        🌐 Reported Social Media Post URL
+                                    </span>
+                                    <div style="font-family: monospace; font-size: 0.88rem; color: #38bdf8; word-break: break-all;">
+                                        ${escapeHtml(c.postUrl)}
+                                    </div>
+                                </div>
+                                <a href="${escapeHtml(c.postUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.9rem; font-size: 0.82rem;">
+                                    🔗 Open Original Post &nearr;
+                                </a>
+                            </div>
+                        ` : ''}
+
+                        ${remarksHtml}
+
+                        <!-- Status & Platform Management -->
+                        <div style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px;">
+                            <label class="form-label">Officer Investigation Status & Escalation</label>
+                            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem;">
+                                <select id="statusSelect" class="form-select" style="max-width: 240px;">
+                                    <option value="SUBMITTED" ${c.status === 'SUBMITTED' ? 'selected' : ''}>SUBMITTED</option>
+                                    <option value="UNDER_REVIEW" ${c.status === 'UNDER_REVIEW' ? 'selected' : ''}>UNDER_REVIEW</option>
+                                    <option value="EVIDENCE_VERIFIED" ${c.status === 'EVIDENCE_VERIFIED' ? 'selected' : ''}>EVIDENCE_VERIFIED</option>
+                                    <option value="EVIDENCE_VERIFICATION" ${c.status === 'EVIDENCE_VERIFICATION' ? 'selected' : ''}>EVIDENCE_VERIFICATION</option>
+                                    <option value="INVESTIGATION" ${c.status === 'INVESTIGATION' ? 'selected' : ''}>INVESTIGATION</option>
+                                    <option value="ACTION_TAKEN" ${c.status === 'ACTION_TAKEN' ? 'selected' : ''}>ACTION_TAKEN</option>
+                                    <option value="RESOLVED" ${c.status === 'RESOLVED' ? 'selected' : ''}>RESOLVED</option>
+                                    <option value="REJECTED" ${c.status === 'REJECTED' ? 'selected' : ''}>REJECTED</option>
+                                    <option value="NEEDS_MORE_INFO" ${c.status === 'NEEDS_MORE_INFO' ? 'selected' : ''}>NEEDS_MORE_INFO</option>
+                                </select>
+                                <input type="text" id="statusRemarksInput" class="form-control" placeholder="Optional officer remarks..." style="max-width: 240px;">
+                                <button onclick="updateComplaintStatus(${c.id})" class="btn btn-secondary btn-sm">Update Status</button>
+                                <button onclick="openPlatformActionModal(${c.id}, '${escapeHtml(c.platform || 'Instagram')}')" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #0284c7, #0369a1);">
+                                    🌐 Take Platform Action
+                                </button>
+                                <span id="statusUpdateMsg" style="color: #a7f3d0; font-size: 0.9rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Severity Analysis Card -->
+                    <div class="card">
+                        <div class="card-title">🤖 Automated Preliminary Severity Analysis</div>
+                        <div style="font-size: 0.85rem; color: #cbd5e1; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem;">
+                            ℹ️ <strong>Preliminary Automated Assessment:</strong> This algorithmic classification is designed to assist admin review and triage. It does not constitute legal proof of cyberbullying without contextual investigation and authenticated evidence.
+                        </div>
+                        ${analysisHtml}
+                    </div>
+
+                    <!-- Digital Evidence Card -->
+                    <div class="card">
+                        <div class="card-title">📸 Digital Evidence Attachments</div>
+                        ${evidenceHtml}
+                    </div>
+                `;
+
+            } catch (err) {
+                container.innerHTML = `<div class="alert alert-error">Network Error: ${err.message}</div>`;
+            }
+        }
+
+        async function updateComplaintStatus(complaintId) {
+            const status = document.getElementById('statusSelect').value;
+            const adminRemarks = document.getElementById('statusRemarksInput')?.value?.trim();
+            const msgSpan = document.getElementById('statusUpdateMsg');
+            msgSpan.innerText = 'Updating...';
+
+            const payload = { status };
+            if (adminRemarks) payload.adminRemarks = adminRemarks;
+
+            try {
+                const response = await fetch(`/api/complaints/${complaintId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    msgSpan.innerText = '✅ Status updated successfully!';
+                    setTimeout(() => { loadDetails(); }, 1200);
+                } else {
+                    const data = await response.json();
+                    alert('Update failed: ' + (data.error || 'Server error'));
+                    msgSpan.innerText = '';
+                }
+            } catch (err) {
+                alert('Network error: ' + err.message);
+                msgSpan.innerText = '';
+            }
+        }
+
+        async function verifyEvidenceItem(evidenceId, status) {
+            const remarks = prompt(`Enter optional officer remarks for marking Evidence #EV-${evidenceId} as ${status}:`, '');
+            try {
+                const response = await fetch(`/api/evidence/${evidenceId}/verify`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ verificationStatus: status, remarks: remarks || '' })
+                });
+
+                if (response.ok) {
+                    loadDetails();
+                } else {
+                    const data = await response.json();
+                    alert('Failed to update verification: ' + (data.error || 'Server error'));
+                }
+            } catch (err) {
+                alert('Network error: ' + err.message);
+            }
+        }
+
+        // Platform Action Modal in details.html
+        let isPaInEditMode = false;
+
+        async function openPlatformActionModal(complaintId, defaultPlatform) {
+            document.getElementById('paComplaintId').value = complaintId;
+            document.getElementById('paPlatformSelect').value = defaultPlatform || 'Instagram';
+            document.getElementById('paAlertBox').style.display = 'none';
+
+            isPaInEditMode = false;
+            document.getElementById('paMessage').readOnly = true;
+            document.getElementById('paToggleEditBtn').innerText = '✏️ Edit Message';
+            document.getElementById('paEditStatusBadge').innerText = 'Preview Mode';
+
+            try {
+                const response = await fetch('/api/platform-actions/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        complaintId: complaintId,
+                        platform: defaultPlatform || 'Instagram'
+                    })
+                });
+
+                if (response.ok) {
+                    const action = await response.json();
+                    document.getElementById('paActionId').value = action.id;
+                    document.getElementById('paRecipient').value = action.recipient || '';
+                    document.getElementById('paReportedAccount').value = action.reportedAccount || '';
+                    document.getElementById('paSubject').value = action.subject || '';
+                    document.getElementById('paMessage').value = action.message || '';
+                    document.getElementById('platformActionModal').style.display = 'flex';
+                } else {
+                    const err = await response.json();
+                    alert(`Failed to generate platform draft: ${err.error || 'Unknown error'}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function handlePaPlatformChange() {
+            const platform = document.getElementById('paPlatformSelect').value;
+            const complaintId = document.getElementById('paComplaintId').value;
+            const reportedAccount = document.getElementById('paReportedAccount').value;
+
+            try {
+                const response = await fetch('/api/platform-actions/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        complaintId: complaintId,
+                        platform: platform,
+                        reportedAccount: reportedAccount
+                    })
+                });
+
+                if (response.ok) {
+                    const action = await response.json();
+                    document.getElementById('paActionId').value = action.id;
+                    document.getElementById('paRecipient').value = action.recipient || '';
+                    document.getElementById('paSubject').value = action.subject || '';
+                    document.getElementById('paMessage').value = action.message || '';
+                }
+            } catch (e) {}
+        }
+
+        function togglePaEditMode() {
+            const msgArea = document.getElementById('paMessage');
+            const toggleBtn = document.getElementById('paToggleEditBtn');
+            const badge = document.getElementById('paEditStatusBadge');
+
+            if (!isPaInEditMode) {
+                isPaInEditMode = true;
+                msgArea.readOnly = false;
+                msgArea.focus();
+                toggleBtn.innerText = '💾 Save Edits';
+                badge.innerText = 'Editing Active';
+                badge.style.background = 'rgba(245, 158, 11, 0.2)';
+                badge.style.color = '#f59e0b';
+            } else {
+                savePaEdits();
+            }
+        }
+
+        async function savePaEdits() {
+            const actionId = document.getElementById('paActionId').value;
+            const recipient = document.getElementById('paRecipient').value;
+            const reportedAccount = document.getElementById('paReportedAccount').value;
+            const subject = document.getElementById('paSubject').value;
+            const message = document.getElementById('paMessage').value;
+
+            try {
+                const res = await fetch(`/api/platform-actions/${actionId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipient, reportedAccount, subject, message
+                    })
+                });
+
+                if (res.ok) {
+                    isPaInEditMode = false;
+                    document.getElementById('paMessage').readOnly = true;
+                    document.getElementById('paToggleEditBtn').innerText = '✏️ Edit Message';
+                    const badge = document.getElementById('paEditStatusBadge');
+                    badge.innerText = 'Edits Saved';
+                    badge.style.background = 'rgba(16, 185, 129, 0.2)';
+                    badge.style.color = '#10b981';
+                }
+            } catch (e) {}
+        }
+
+        async function confirmSendPlatformAction() {
+            const actionId = document.getElementById('paActionId').value;
+            const recipient = document.getElementById('paRecipient').value;
+            const platform = document.getElementById('paPlatformSelect').value;
+
+            if (!recipient) {
+                alert('Please enter a recipient platform contact.');
+                return;
+            }
+
+            const confirmed = confirm(`Are you sure you want to officially dispatch this cyberbullying report to the ${platform} Safety Team at:\n${recipient}?`);
+            if (!confirmed) return;
+
+            const sendBtn = document.getElementById('paSendBtn');
+            sendBtn.disabled = true;
+            sendBtn.innerText = 'Dispatching Report...';
+
+            try {
+                if (isPaInEditMode) await savePaEdits();
+                const res = await fetch(`/api/platform-actions/${actionId}/send`, { method: 'POST' });
+
+                if (res.ok) {
+                    alert('🚀 Platform report officially dispatched! Status updated to ACTION_TAKEN.');
+                    closePlatformActionModal();
+                    loadDetails();
+                } else {
+                    const err = await res.json();
+                    alert(`Failed to send report: ${err.error || 'Server error'}`);
+                    sendBtn.disabled = false;
+                    sendBtn.innerText = '🚀 Send Platform Report';
+                }
+            } catch (err) {
+                alert(`Network error: ${err.message}`);
+                sendBtn.disabled = false;
+                sendBtn.innerText = '🚀 Send Platform Report';
+            }
+        }
+
+        function closePlatformActionModal() {
+            document.getElementById('platformActionModal').style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/[&<>"']/g, m => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[m]);
+        }
+    </script>
+</body>
+</html>

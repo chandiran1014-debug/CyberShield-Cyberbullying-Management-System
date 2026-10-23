@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Cyberbullying – CyberShield</title>
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+
+    <!-- Embedded Fail-Safe CSS: Guarantees 100% styled layout under any environment -->
+    <style>
+        :root {
+            --bg-primary: #0a0f1d;
+            --bg-secondary: #111a33;
+            --bg-card: rgba(20, 31, 61, 0.88);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --border-hover: rgba(56, 189, 248, 0.6);
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --cyan: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.18) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.14) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation: STRICTLY USER NAVIGATION */
+        .navbar {
+            background: rgba(15, 23, 42, 0.94);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-icon {
+            font-size: 1.6rem;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .nav-link {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #38bdf8;
+        }
+
+        .user-portal-badge {
+            font-size: 0.88rem;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            padding: 0.4rem 1rem;
+            border-radius: 9999px;
+            color: #38bdf8;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-nav-logout {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-color);
+            color: #cbd5e1;
+            padding: 0.45rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-nav-logout:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+        }
+
+        /* Container */
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 2.5rem auto 4rem;
+            padding: 0 1.25rem;
+            flex: 1;
+        }
+
+        .back-nav-link {
+            color: #38bdf8;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.92rem;
+            margin-bottom: 1.5rem;
+            transition: gap 0.2s ease;
+        }
+
+        .back-nav-link:hover {
+            gap: 0.7rem;
+            color: #7dd3fc;
+        }
+
+        .report-card {
+            background: linear-gradient(180deg, rgba(22, 33, 62, 0.92) 0%, rgba(13, 22, 45, 0.98) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-lg);
+            padding: 2.75rem 2.25rem;
+            box-shadow: 0 16px 45px rgba(0, 0, 0, 0.5);
+        }
+
+        .report-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .report-header h1 {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .report-header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 1.4rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.45rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            color: #ffffff;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+            color: #ffffff;
+            border: none;
+            padding: 0.95rem;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.35);
+            margin-top: 1rem;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+            filter: brightness(1.1);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert-box {
+            padding: 0.85rem 1.15rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.92rem;
+            display: none;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+
+        /* Form Validation & Screenshot Preview Styling */
+        .field-error {
+            color: #f87171;
+            font-size: 0.82rem;
+            margin-top: 0.35rem;
+            display: none;
+            font-weight: 500;
+        }
+
+        .form-control.is-invalid, .form-select.is-invalid {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
+        }
+
+        .screenshot-card {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 0.6rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .screenshot-card:hover {
+            border-color: var(--cyan);
+            transform: translateY(-2px);
+        }
+
+        .screenshot-card img {
+            width: 100%;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 0.4rem;
+        }
+
+        .screenshot-card-name {
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .screenshot-card-size {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .btn-remove-photo {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            font-size: 0.72rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+
+        .btn-remove-photo:hover {
+            background: rgba(239, 68, 68, 0.4);
+            color: #ffffff;
+        }
+
+        /* SUCCESS MODAL STYLING */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 10, 24, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 1.25rem;
+        }
+
+        .success-modal-card {
+            background: linear-gradient(180deg, #131d38 0%, #0c1427 100%);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(14, 165, 233, 0.25);
+            border-radius: 20px;
+            max-width: 520px;
+            width: 100%;
+            padding: 2.75rem 2.25rem;
+            text-align: center;
+            position: relative;
+            animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .success-icon-badge {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.25) 100%);
+            border: 2px solid rgba(52, 211, 153, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.35);
+        }
+
+        .success-modal-title {
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .success-modal-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .success-details-box {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.25rem 1.4rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .success-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .success-detail-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .success-detail-row:first-child {
+            padding-top: 0;
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #ffffff;
+        }
+
+        .detail-value.id-value {
+            color: var(--cyan);
+            font-family: monospace;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+        }
+
+        .review-notice {
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            margin-bottom: 1.75rem;
+            line-height: 1.45;
+        }
+
+        .btn-view-status {
+            width: 100%;
+            background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+            color: #ffffff;
+            border: none;
+            padding: 0.95rem 1.5rem;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 18px rgba(37, 99, 235, 0.4);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-view-status:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(37, 99, 235, 0.55);
+            filter: brightness(1.1);
+            gap: 0.8rem;
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge-submitted {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+        }
+
+        .badge-critical {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #f87171;
+        }
+
+        .badge-high {
+            background: rgba(249, 115, 22, 0.2);
+            border: 1px solid rgba(249, 115, 22, 0.5);
+            color: #fb923c;
+        }
+
+        .badge-medium {
+            background: rgba(234, 179, 8, 0.2);
+            border: 1px solid rgba(234, 179, 8, 0.5);
+            color: #fde047;
+        }
+
+        .badge-low {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: #34d399;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- USER-ONLY TOP NAVIGATION (NO ADMIN REFERENCES) -->
+    <nav class="navbar">
+        <a th:href="@{/user/dashboard}" href="/user/dashboard" class="brand">
+            <span class="brand-icon">🛡️</span> CyberShield
+        </a>
+        <div class="nav-links">
+            <a th:href="@{/user/dashboard}" href="/user/dashboard" class="nav-link">Dashboard</a>
+            <a th:href="@{/user/track}" href="/user/track" class="nav-link">Track Complaints</a>
+            <a th:href="@{/user/profile}" href="/user/profile" class="nav-link">Profile</a>
+            <a th:href="@{/user/notifications}" href="/user/notifications" class="nav-link">Notifications</a>
+            <span class="user-portal-badge" id="userBadgeDisplay">
+                👤 User Portal
+            </span>
+            <button onclick="handleLogout()" class="btn-nav-logout">
+                🚪 Logout
+            </button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Return Link -->
+        <a th:href="@{/user/dashboard}" href="/user/dashboard" class="back-nav-link">
+            &larr; Return to User Dashboard
+        </a>
+
+        <div class="report-card">
+            <div class="report-header">
+                <h1>Report Cyberbullying 📝</h1>
+                <p>Submit incident details and evidence confidentially. Your report will be automatically triaged and prioritized for officer review.</p>
+            </div>
+
+            <div id="alertBox" class="alert-box alert-error"></div>
+
+            <!-- Complaint Form -->
+            <form id="complaintForm" onsubmit="handleComplaintSubmit(event)">
+                <!-- Reporting User / Complainant Details -->
+                <div class="form-group" style="background: rgba(56, 189, 248, 0.07); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 1.15rem 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <span style="font-weight: 700; color: #38bdf8; font-size: 0.95rem; display: flex; align-items: center; gap: 0.45rem;">
+                            👤 Reporting User Details
+                        </span>
+                        <span id="userIdBadge" style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); padding: 0.25rem 0.65rem; border-radius: 6px; color: #38bdf8; font-weight: 600;">
+                            Detecting Account...
+                        </span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                        <div>
+                            <label class="form-label" for="reporterName">Reporting User / Complainant Name <span style="color: #f87171;">*</span></label>
+                            <input type="text" id="reporterName" class="form-control" placeholder="Enter your full name or complainant alias" required oninput="clearFieldError('reporterName')">
+                            <small style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.3rem; display: block;">
+                                Auto-filled from your registered account. You can edit this name or provide an alias.
+                            </small>
+                            <div id="reporterNameError" class="field-error"></div>
+                        </div>
+                        <div>
+                            <label class="form-label" for="userId">Reporting User ID <span style="color: #f87171;">*</span></label>
+                            <input type="number" id="userId" name="userId" class="form-control" value="1" min="1" required oninput="clearFieldError('userId')">
+                            <small style="color: var(--text-muted); font-size: 0.78rem; margin-top: 0.3rem; display: block;">
+                                Linked system account ID.
+                            </small>
+                            <div id="userIdError" class="field-error"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="title">Complaint Title <span style="color: #f87171;">*</span></label>
+                    <input type="text" id="title" class="form-control" placeholder="e.g. Abusive messages and harassment on Instagram" required oninput="clearFieldError('title')">
+                    <div id="titleError" class="field-error"></div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <!-- Incident Category Section (Presets + Manual Entry) -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+                            <label class="form-label" for="category" style="margin-bottom: 0;">Incident Category <span style="color: #f87171;">*</span></label>
+                            <button type="button" id="btnToggleCustomCategory" onclick="toggleCustomCategoryInput()" style="background: none; border: none; color: #38bdf8; font-size: 0.8rem; cursor: pointer; text-decoration: underline; font-weight: 600;">
+                                ✏️ Enter Manually
+                            </button>
+                        </div>
+                        <select id="category" class="form-select" required onchange="handleCategoryChange()">
+                            <option value="" disabled selected>-- Select Incident Category --</option>
+                            <option value="HARASSMENT">Harassment</option>
+                            <option value="HATE_SPEECH">Hate Speech</option>
+                            <option value="IMPERSONATION">Impersonation / Fake Profile</option>
+                            <option value="DOXXING">Doxxing / Privacy Violation</option>
+                            <option value="THREATS">Direct Violence Threats</option>
+                            <option value="STALKING">Online Stalking</option>
+                            <option value="DEFAMATION">Defamation / Slander</option>
+                            <option value="CYBER_BULLYING">Cyberbullying / Trolling</option>
+                            <option value="OTHER">Other / Enter Manually...</option>
+                        </select>
+                        <div id="customCategoryWrapper" style="display: none; margin-top: 0.55rem;">
+                            <input type="text" id="customCategory" class="form-control" placeholder="Type custom category (e.g. Blackmail, Sextortion...)" oninput="clearFieldError('category')">
+                            <small style="color: #38bdf8; font-size: 0.78rem; display: block; margin-top: 0.25rem;">Custom category will be saved with your complaint.</small>
+                        </div>
+                        <div id="categoryError" class="field-error"></div>
+                    </div>
+
+                    <!-- Perpetrator Platform Section (Presets + Manual Entry) -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+                            <label class="form-label" for="platform" style="margin-bottom: 0;">Perpetrator Platform <span style="color: #f87171;">*</span></label>
+                            <button type="button" id="btnToggleCustomPlatform" onclick="toggleCustomPlatformInput()" style="background: none; border: none; color: #38bdf8; font-size: 0.8rem; cursor: pointer; text-decoration: underline; font-weight: 600;">
+                                ✏️ Enter Manually
+                            </button>
+                        </div>
+                        <select id="platform" class="form-select" required onchange="handlePlatformChange()">
+                            <option value="" disabled selected>-- Select Platform --</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="Discord">Discord</option>
+                            <option value="Twitter / X">Twitter / X</option>
+                            <option value="WhatsApp">WhatsApp</option>
+                            <option value="Telegram">Telegram</option>
+                            <option value="Facebook">Facebook</option>
+                            <option value="Reddit">Reddit</option>
+                            <option value="YouTube">YouTube</option>
+                            <option value="Snapchat">Snapchat</option>
+                            <option value="TikTok">TikTok</option>
+                            <option value="Other">Other / Enter Manually...</option>
+                        </select>
+                        <div id="customPlatformWrapper" style="display: none; margin-top: 0.55rem;">
+                            <input type="text" id="customPlatform" class="form-control" placeholder="Type custom platform (e.g. Signal, Twitch, WeChat, Roblox...)" oninput="clearFieldError('platform')">
+                            <small style="color: #38bdf8; font-size: 0.78rem; display: block; margin-top: 0.25rem;">Custom platform will be saved with your complaint.</small>
+                        </div>
+                        <div id="platformError" class="field-error"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Detailed Description of Incident <span style="color: #f87171;">*</span></label>
+                    <textarea id="description" class="form-control" rows="5" placeholder="Detail what happened, what abusive words or threats were used, perpetrator usernames, and approximate dates/times..." required oninput="clearFieldError('description')"></textarea>
+                    <div id="descriptionError" class="field-error"></div>
+                </div>
+
+                <!-- Screenshot Attachment Section (Multiple files & Upload / Add More Photos) -->
+                <div class="form-group" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1.1rem 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <label class="form-label" for="evidenceFileInput" style="margin-bottom: 0; cursor: pointer;">
+                            Screenshot Evidence <span style="color: #f87171;">*</span>
+                            <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted); margin-left: 0.35rem;">(At least 1 screenshot is required)</span>
+                        </label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <button type="button" id="btnUploadPhotos" onclick="triggerFileInput()" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: 1px solid rgba(56, 189, 248, 0.5); color: #ffffff; font-weight: 700; padding: 0.45rem 1rem; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);">
+                                📷 Upload Photos
+                            </button>
+                            <button type="button" id="btnAddMorePhotos" onclick="triggerFileInput()" class="btn btn-secondary btn-sm" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-weight: 600; padding: 0.45rem 0.95rem; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
+                                ➕ Add More Photos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Multi-file input supporting PNG, JPG, JPEG, WebP -->
+                    <input type="file" id="evidenceFileInput" name="files" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" multiple style="display: none;" onchange="handleFilesSelected(event)">
+
+                    <!-- Interactive Drag-and-Drop / Clickable Upload Area -->
+                    <div id="uploadDropZone" onclick="triggerFileInput()" style="border: 2px dashed rgba(56, 189, 248, 0.35); border-radius: 10px; padding: 1.4rem 1rem; text-align: center; background: rgba(15, 23, 42, 0.6); cursor: pointer; transition: all 0.2s ease; margin-bottom: 0.75rem;">
+                        <div style="font-size: 2.2rem; margin-bottom: 0.35rem;">🖼️</div>
+                        <div style="font-weight: 700; color: #f8fafc; font-size: 0.95rem;">Click anywhere here or click "Upload Photos" to browse files</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Supported formats: PNG, JPG, JPEG, WebP &bull; Max 10MB per photo (50MB total)</div>
+                    </div>
+
+                    <!-- Previews of selected photos with remove button -->
+                    <div id="screenshotPreviewGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem;"></div>
+
+                    <div id="fileCountBadge" style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.5rem;">No screenshots selected yet.</div>
+                    <div id="evidenceError" class="field-error"></div>
+                </div>
+
+                <!-- Post URL Section (Compulsory, Directly Below Screenshots) -->
+                <div class="form-group" style="margin-top: 1.25rem;">
+                    <label class="form-label" for="postUrl">Post URL <span style="color: #f87171;">*</span></label>
+                    <input type="url" id="postUrl" class="form-control" placeholder="https://www.instagram.com/p/C3xYz1234/" required oninput="clearFieldError('postUrl')">
+                    <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.35rem; display: block;">
+                        Enter the full URL of the original social media post containing the bullying comment or content (must start with http:// or https://).
+                    </small>
+                    <div id="postUrlError" class="field-error"></div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn-submit">
+                    Submit Complaint for Analysis &rarr;
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- SUCCESS POPUP / MODAL (CRITICAL REQUIREMENT) -->
+    <div id="successModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content success-modal-card">
+            <div class="success-icon-badge">🎉</div>
+            <h2 class="success-modal-title">Complaint Submitted Successfully</h2>
+            <p class="success-modal-subtitle">Your complaint has been registered with CyberShield.</p>
+            
+            <div class="success-details-box">
+                <div class="success-detail-row">
+                    <span class="detail-label">Complaint ID:</span>
+                    <span class="detail-value id-value" id="popupComplaintNumber">CS-2026-014</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="detail-label">Complainant / Reporter:</span>
+                    <span class="detail-value" id="popupReporterName" style="color: #ffffff; font-weight: 700;"></span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="detail-label">Platform:</span>
+                    <span class="detail-value" id="popupPlatformText" style="color: #38bdf8; font-weight: 700;"></span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value" id="popupStatusBadge">
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); font-weight: 700;">PENDING</span>
+                    </span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="detail-label">Priority:</span>
+                    <span class="detail-value" id="popupPriorityBadge">
+                        <span class="badge badge-critical">IMMEDIATE ATTENTION</span>
+                    </span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="detail-label">Preliminary Assessment:</span>
+                    <span class="detail-value" id="popupAssessmentText" style="color: #38bdf8;">LOW (Risk Score: 0/10)</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="detail-label">Category:</span>
+                    <span class="detail-value" id="popupCategoryText" style="color: #cbd5e1;">Online Harassment</span>
+                </div>
+                <div class="success-detail-row" id="popupEvidenceRow" style="display: none;">
+                    <span class="detail-label">Evidence:</span>
+                    <span class="detail-value" id="popupEvidenceStatus" style="color: #6ee7b7; font-size: 0.88rem;">📸 Uploaded</span>
+                </div>
+                <div class="success-detail-row" id="popupPostUrlRow" style="display: none;">
+                    <span class="detail-label">Original Post URL:</span>
+                    <span class="detail-value" id="popupPostUrlValue" style="color: #38bdf8; word-break: break-all; font-size: 0.85rem;"></span>
+                </div>
+            </div>
+            
+            <div class="review-notice">
+                🛡️ <strong>Preliminary Automated Severity Assessment.</strong> The administrator makes the final decision.
+            </div>
+            
+            <div class="success-modal-actions">
+                <button type="button" id="btnViewStatus" onclick="redirectToTrackComplaints()" class="btn-view-status">
+                    View Complaint Status
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        CyberShield &copy; 2026 – Cyberbullying Incident Management System &bull; Confidential User Portal
+    </footer>
+
+    <script>
+        let submittedComplaintId = null;
+        let selectedFiles = []; // Holds all attached screenshot files
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.innerText = str;
+            return div.innerHTML;
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            // URL params fallback for test suites or links
+            const urlParams = new URLSearchParams(window.location.search);
+            const uidParam = urlParams.get('userId');
+            if (uidParam) {
+                document.getElementById('userId').value = uidParam;
+                document.getElementById('userIdBadge').innerText = `User ID #${uidParam}`;
+            }
+            const nameParam = urlParams.get('userName') || urlParams.get('reporterName');
+            if (nameParam) {
+                document.getElementById('reporterName').value = nameParam;
+            }
+
+            // Identify current logged-in user
+            try {
+                const res = await fetch('/api/users/current');
+                if (res.ok) {
+                    const user = await res.json();
+                    if (user && user.id) {
+                        document.getElementById('userId').value = user.id;
+                        if (!document.getElementById('reporterName').value) {
+                            document.getElementById('reporterName').value = user.name || user.email || `User #${user.id}`;
+                        }
+                        document.getElementById('userIdBadge').innerText = `👤 Account: ${user.name || user.email} (ID: ${user.id})`;
+                        document.getElementById('userBadgeDisplay').innerText = `👤 ${user.name}`;
+                        setupUploadListeners();
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            const raw = localStorage.getItem('cyberShield_user');
+            if (raw) {
+                try {
+                    const u = JSON.parse(raw);
+                    if (u.id) {
+                        document.getElementById('userId').value = u.id;
+                        if (!document.getElementById('reporterName').value) {
+                            document.getElementById('reporterName').value = u.name || u.email || `User #${u.id}`;
+                        }
+                        document.getElementById('userIdBadge').innerText = `👤 Account: ${u.name || u.email} (ID: ${u.id})`;
+                        document.getElementById('userBadgeDisplay').innerText = `👤 ${u.name}`;
+                    }
+                } catch (e) {}
+            }
+
+            setupUploadListeners();
+        });
+
+        function handleCategoryChange() {
+            clearFieldError('category');
+            const catSelect = document.getElementById('category');
+            const customWrap = document.getElementById('customCategoryWrapper');
+            const customInput = document.getElementById('customCategory');
+            if (catSelect.value === 'OTHER') {
+                customWrap.style.display = 'block';
+                customInput.focus();
+            } else {
+                customWrap.style.display = 'none';
+            }
+        }
+
+        function toggleCustomCategoryInput() {
+            const catSelect = document.getElementById('category');
+            const customWrap = document.getElementById('customCategoryWrapper');
+            const customInput = document.getElementById('customCategory');
+            catSelect.value = 'OTHER';
+            customWrap.style.display = 'block';
+            customInput.focus();
+        }
+
+        function handlePlatformChange() {
+            clearFieldError('platform');
+            const platSelect = document.getElementById('platform');
+            const customWrap = document.getElementById('customPlatformWrapper');
+            const customInput = document.getElementById('customPlatform');
+            if (platSelect.value === 'Other') {
+                customWrap.style.display = 'block';
+                customInput.focus();
+            } else {
+                customWrap.style.display = 'none';
+            }
+        }
+
+        function toggleCustomPlatformInput() {
+            const platSelect = document.getElementById('platform');
+            const customWrap = document.getElementById('customPlatformWrapper');
+            const customInput = document.getElementById('customPlatform');
+            platSelect.value = 'Other';
+            customWrap.style.display = 'block';
+            customInput.focus();
+        }
+
+        function setupUploadListeners() {
+            const btnUpload = document.getElementById('btnUploadPhotos');
+            const btnAddMore = document.getElementById('btnAddMorePhotos');
+            const dropZone = document.getElementById('uploadDropZone');
+
+            const onTriggerClick = (e) => {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                triggerFileInput();
+            };
+
+            if (btnUpload && !btnUpload._bound) {
+                btnUpload.addEventListener('click', onTriggerClick);
+                btnUpload._bound = true;
+            }
+            if (btnAddMore && !btnAddMore._bound) {
+                btnAddMore.addEventListener('click', onTriggerClick);
+                btnAddMore._bound = true;
+            }
+            if (dropZone && !dropZone._bound) {
+                dropZone.addEventListener('click', onTriggerClick);
+
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = '#38bdf8';
+                    dropZone.style.backgroundColor = 'rgba(56, 189, 248, 0.1)';
+                });
+                dropZone.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+                    dropZone.style.backgroundColor = 'rgba(15, 23, 42, 0.6)';
+                });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+                    dropZone.style.backgroundColor = 'rgba(15, 23, 42, 0.6)';
+                    if (e.dataTransfer && e.dataTransfer.files) {
+                        processFilesList(e.dataTransfer.files);
+                    }
+                });
+                dropZone._bound = true;
+            }
+        }
+
+        function triggerFileInput() {
+            const input = document.getElementById('evidenceFileInput');
+            if (input) {
+                input.click();
+            }
+        }
+
+        function processFilesList(files) {
+            if (!files || files.length === 0) return;
+
+            const allowedExts = ['.png', '.jpg', '.jpeg', '.webp'];
+            let hasError = false;
+            let errorMsg = '';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const nameLower = file.name.toLowerCase();
+                const isAllowed = allowedExts.some(ext => nameLower.endsWith(ext)) || (file.type && file.type.startsWith('image/'));
+
+                if (!isAllowed) {
+                    hasError = true;
+                    errorMsg = `File "${file.name}" has an unsupported format. Only PNG, JPG, JPEG, and WebP are allowed.`;
+                    break;
+                }
+
+                if (file.size > 10 * 1024 * 1024) {
+                    hasError = true;
+                    errorMsg = `File "${file.name}" exceeds the 10MB size limit.`;
+                    break;
+                }
+
+                // Check total size limit
+                let currentTotal = selectedFiles.reduce((acc, f) => acc + f.size, 0) + file.size;
+                if (currentTotal > 50 * 1024 * 1024) {
+                    hasError = true;
+                    errorMsg = `Total upload size exceeds 50MB limit.`;
+                    break;
+                }
+
+                // Avoid exact duplicates
+                const isDuplicate = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+                if (!isDuplicate) {
+                    selectedFiles.push(file);
+                }
+            }
+
+            if (hasError) {
+                setFieldError('evidence', errorMsg);
+            } else {
+                clearFieldError('evidence');
+            }
+
+            renderPreviews();
+        }
+
+        function handleFilesSelected(event) {
+            if (event && event.target && event.target.files) {
+                processFilesList(event.target.files);
+                // Reset input so user can pick the same file again if removed
+                event.target.value = '';
+            }
+        }
+
+        function removeFile(index) {
+            if (index >= 0 && index < selectedFiles.length) {
+                selectedFiles.splice(index, 1);
+                renderPreviews();
+                if (selectedFiles.length === 0) {
+                    setFieldError('evidence', 'At least one screenshot evidence file is required.');
+                } else {
+                    clearFieldError('evidence');
+                }
+            }
+        }
+
+        function renderPreviews() {
+            const grid = document.getElementById('screenshotPreviewGrid');
+            const badge = document.getElementById('fileCountBadge');
+
+            if (selectedFiles.length === 0) {
+                grid.innerHTML = '';
+                badge.innerText = 'No screenshots selected yet.';
+                return;
+            }
+
+            badge.innerText = `${selectedFiles.length} screenshot(s) selected:`;
+
+            let html = '';
+            selectedFiles.forEach((file, idx) => {
+                const url = URL.createObjectURL(file);
+                const sizeKb = (file.size / 1024).toFixed(1);
+                const sizeText = file.size > 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : `${sizeKb} KB`;
+
+                html += `
+                    <div class="screenshot-card">
+                        <img src="${url}" alt="Screenshot Preview">
+                        <div class="screenshot-card-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
+                        <div class="screenshot-card-size">${sizeText}</div>
+                        <button type="button" class="btn-remove-photo" onclick="removeFile(${idx})">✕ Remove</button>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        function clearFieldError(fieldId) {
+            const errEl = document.getElementById(fieldId + 'Error');
+            if (errEl) {
+                errEl.innerText = '';
+                errEl.style.display = 'none';
+            }
+            const inputEl = document.getElementById(fieldId);
+            if (inputEl) {
+                inputEl.classList.remove('is-invalid');
+            }
+        }
+
+        function setFieldError(fieldId, message) {
+            const errEl = document.getElementById(fieldId + 'Error');
+            if (errEl) {
+                errEl.innerText = message;
+                errEl.style.display = 'block';
+            }
+            const inputEl = document.getElementById(fieldId);
+            if (inputEl) {
+                inputEl.classList.add('is-invalid');
+            }
+        }
+
+        function isValidHttpOrHttpsUrl(str) {
+            if (!str || !str.trim()) return false;
+            const trimmed = str.trim();
+            const lower = trimmed.toLowerCase();
+            if (!lower.startsWith('http://') && !lower.startsWith('https://')) {
+                return false;
+            }
+            try {
+                const parsed = new URL(trimmed);
+                return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function validateComplaintForm() {
+            let isValid = true;
+            let firstInvalidEl = null;
+
+            // 0. Reporting User Name & ID validation
+            const repNameInput = document.getElementById('reporterName');
+            const repNameVal = repNameInput ? repNameInput.value.trim() : '';
+            if (!repNameVal) {
+                setFieldError('reporterName', 'Reporting user / complainant name is required.');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = repNameInput;
+            } else {
+                clearFieldError('reporterName');
+            }
+
+            const userIdInput = document.getElementById('userId');
+            const userIdVal = userIdInput ? parseInt(userIdInput.value) : 0;
+            if (!userIdVal || isNaN(userIdVal) || userIdVal < 1) {
+                setFieldError('userId', 'A valid reporting user ID (at least 1) is required.');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = userIdInput;
+            } else {
+                clearFieldError('userId');
+            }
+
+            // 1. Title validation
+            const titleInput = document.getElementById('title');
+            const titleVal = titleInput.value.trim();
+            if (!titleVal) {
+                setFieldError('title', 'Complaint title is required.');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = titleInput;
+            } else {
+                clearFieldError('title');
+            }
+
+            // 2. Category validation (with manual custom category support)
+            const catSelect = document.getElementById('category');
+            const customCatInput = document.getElementById('customCategory');
+            if (!catSelect.value) {
+                setFieldError('category', 'Incident category is required. Please select one or enter manually.');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = catSelect;
+            } else if (catSelect.value === 'OTHER' && (!customCatInput || !customCatInput.value.trim())) {
+                setFieldError('category', 'Please manually type your custom incident category.');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = customCatInput;
+            } else {
+                clearFieldError('category');
+            }
+
+            // 3. Platform validation (with manual custom platform support)
+            const platSelect = document.getElementById('platform');
+            const customPlatInput = document.getElementById('customPlatform');
+            if (!platSelect.value) {
+                setFieldError('platform', 'Perpetrator platform is required. Please select one or enter manually.');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = platSelect;
+            } else if (platSelect.value === 'Other' && (!customPlatInput || !customPlatInput.value.trim())) {
+                setFieldError('platform', 'Please manually type your custom perpetrator platform.');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = customPlatInput;
+            } else {
+                clearFieldError('platform');
+            }
+
+            // 4. Description validation
+            const descInput = document.getElementById('description');
+            const descVal = descInput.value.trim();
+            if (!descVal) {
+                setFieldError('description', 'Detailed description is required and cannot be empty or whitespace only.');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = descInput;
+            } else {
+                clearFieldError('description');
+            }
+
+            // 5. Screenshot Evidence validation (At least 1 required)
+            if (selectedFiles.length === 0) {
+                setFieldError('evidence', 'At least one screenshot evidence file is required.');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = document.getElementById('btnAddMorePhotos');
+            } else {
+                clearFieldError('evidence');
+            }
+
+            // 6. Post URL validation (Mandatory, valid HTTP/HTTPS)
+            const postUrlInput = document.getElementById('postUrl');
+            const postUrlVal = postUrlInput.value.trim();
+            if (!postUrlVal) {
+                setFieldError('postUrl', 'Original social media Post URL is required.');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = postUrlInput;
+            } else if (!isValidHttpOrHttpsUrl(postUrlVal)) {
+                setFieldError('postUrl', 'Invalid Post URL. Must be a valid web address starting with http:// or https://');
+                isValid = false;
+                if (!firstInvalidEl) firstInvalidEl = postUrlInput;
+            } else {
+                clearFieldError('postUrl');
+            }
+
+            if (!isValid && firstInvalidEl) {
+                if (typeof firstInvalidEl.focus === 'function') {
+                    firstInvalidEl.focus();
+                }
+            }
+
+            return isValid;
+        }
+
+        async function handleComplaintSubmit(event) {
+            event.preventDefault();
+            const alertBox = document.getElementById('alertBox');
+            const submitBtn = document.getElementById('submitBtn');
+
+            alertBox.style.display = 'none';
+
+            // Complete form validation before any submission
+            if (!validateComplaintForm()) {
+                alertBox.className = 'alert-box alert-error';
+                alertBox.innerHTML = `<strong>⚠️ Please Complete All Required Fields:</strong> Verify the highlighted fields above before submitting.`;
+                alertBox.style.display = 'block';
+                return;
+            }
+
+            let uidVal = parseInt(document.getElementById('userId').value);
+            if (!uidVal || isNaN(uidVal)) {
+                uidVal = 1;
+            }
+
+            const reporterNameVal = document.getElementById('reporterName') ? document.getElementById('reporterName').value.trim() : '';
+
+            // Resolve incident category (either selected preset or manual custom text)
+            const catSelectVal = document.getElementById('category').value;
+            const customCatVal = document.getElementById('customCategory') ? document.getElementById('customCategory').value.trim() : '';
+            const finalCategory = (catSelectVal === 'OTHER' && customCatVal) ? customCatVal : catSelectVal;
+
+            // Resolve perpetrator platform (either selected preset or manual custom text)
+            const platSelectVal = document.getElementById('platform').value;
+            const customPlatVal = document.getElementById('customPlatform') ? document.getElementById('customPlatform').value.trim() : '';
+            const finalPlatform = (platSelectVal === 'Other' && customPlatVal) ? customPlatVal : platSelectVal;
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Submitting & Analyzing...';
+
+            try {
+                // Build atomic multipart request with all fields and multiple screenshots
+                const formData = new FormData();
+                formData.append('userId', uidVal);
+                if (reporterNameVal) {
+                    formData.append('reporterName', reporterNameVal);
+                }
+                formData.append('title', document.getElementById('title').value.trim());
+                formData.append('category', finalCategory);
+                formData.append('platform', finalPlatform);
+                formData.append('description', document.getElementById('description').value.trim());
+                formData.append('postUrl', document.getElementById('postUrl').value.trim());
+
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    formData.append('files', selectedFiles[i]);
+                }
+
+                const response = await fetch('/api/complaints', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alertBox.className = 'alert-box alert-error';
+                    alertBox.innerHTML = `<strong>⚠️ Submission Failed:</strong> ${data.error || 'Please verify form fields.'}`;
+                    alertBox.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Submit Complaint for Analysis \u2192';
+                    return;
+                }
+
+                submittedComplaintId = data.id;
+
+                // Populate Success Popup with returned backend data
+                const compNum = data.complaintNumber || (`CS-${data.id}`);
+                document.getElementById('popupComplaintNumber').innerText = compNum;
+
+                // Reporter and Platform details in popup
+                const popupReporter = document.getElementById('popupReporterName');
+                if (popupReporter) {
+                    popupReporter.innerText = data.reporterName || reporterNameVal || `User #${uidVal}`;
+                }
+                const popupPlat = document.getElementById('popupPlatformText');
+                if (popupPlat) {
+                    popupPlat.innerText = finalPlatform;
+                }
+
+                // Status Badge
+                const statusVal = data.status || 'PENDING';
+                document.getElementById('popupStatusBadge').innerHTML = `<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); font-weight: 700;">${statusVal}</span>`;
+
+                // Priority Badge based on backend priority / severity
+                const sev = data.detectedSeverity ? data.detectedSeverity.toUpperCase() : 'LOW';
+                const isImmediate = data.priority === 'IMMEDIATE_ATTENTION' || sev === 'HIGH' || sev === 'CRITICAL';
+                
+                let prioHtml = '';
+                if (isImmediate) {
+                    prioHtml = `<span class="badge badge-critical">🚨 IMMEDIATE ATTENTION</span>`;
+                } else if (sev === 'MEDIUM') {
+                    prioHtml = `<span class="badge badge-medium">⚠️ MEDIUM PRIORITY</span>`;
+                } else {
+                    prioHtml = `<span class="badge badge-low">NORMAL REVIEW</span>`;
+                }
+                document.getElementById('popupPriorityBadge').innerHTML = prioHtml;
+
+                // Preliminary Automated Severity Assessment details
+                const rawScore = (data.riskScore !== undefined && data.riskScore !== null) ? data.riskScore : 0;
+                const displayScore = Math.min(rawScore, 10);
+                const assessmentEl = document.getElementById('popupAssessmentText');
+                if (assessmentEl) {
+                    assessmentEl.innerText = `${sev} (Risk Score: ${displayScore}/10)`;
+                }
+                const catEl = document.getElementById('popupCategoryText');
+                if (catEl) {
+                    catEl.innerText = finalCategory || data.detectedCategory || 'Online Harassment';
+                }
+
+                // Evidence row in popup
+                const evRow = document.getElementById('popupEvidenceRow');
+                if (selectedFiles.length > 0) {
+                    document.getElementById('popupEvidenceStatus').innerText = `📸 ${selectedFiles.length} Screenshot(s) Attached (Pending Verification)`;
+                    evRow.style.display = 'flex';
+                } else {
+                    evRow.style.display = 'none';
+                }
+
+                // Post URL row in popup
+                const postUrlRow = document.getElementById('popupPostUrlRow');
+                const postUrlVal = data.postUrl || document.getElementById('postUrl').value.trim();
+                if (postUrlVal) {
+                    document.getElementById('popupPostUrlValue').innerText = postUrlVal;
+                    postUrlRow.style.display = 'flex';
+                } else {
+                    postUrlRow.style.display = 'none';
+                }
+
+                // SHOW SUCCESS POPUP
+                document.getElementById('successModal').style.display = 'flex';
+
+            } catch (err) {
+                alertBox.className = 'alert-box alert-error';
+                alertBox.innerHTML = `<strong>⚠️ Network Error:</strong> ${err.message}`;
+                alertBox.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Submit Complaint for Analysis \u2192';
+            }
+        }
+
+        // REDIRECT TO TRACK COMPLAINTS WHEN USER CLICKS "View Complaint Status →"
+        function redirectToTrackComplaints() {
+            window.location.href = '/user/track';
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch('/api/users/logout', { method: 'POST' });
+            } catch (e) {}
+            localStorage.removeItem('cyberShield_user');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
